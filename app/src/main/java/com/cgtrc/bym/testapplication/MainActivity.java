@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
 
         //新闻内容的容器
         mArticleList = new ArrayList<Article>();
-        final String href = "http://192.168.228.135:8080/test/newsModel.html";
+        final String href = "http://192.168.228.135:8080/test/Detial.html";
 
         //图片加载器
         mImageLoader = new ImageLoader(this);
@@ -235,15 +235,9 @@ public class MainActivity extends Activity {
 
             //得到title
             Elements title = doc.select("title");
-            Elements body = doc.select("body");
-            Elements h1 = doc.select("h1");
-            Element h11 = doc.select("h1").first();
-            Log.i("解析的title", "" + title);
-            Log.i("解析的body", "" + body);
-            Log.i("解析的h1", "" + h1);
-            Log.i("解析的h11", "" + h11);
 
-            article.setTitle(h11.text());
+
+            article.setTitle(title.text());
             article.setSummary("");
             article.setImageUrl("");
             article.setPostTime("");
