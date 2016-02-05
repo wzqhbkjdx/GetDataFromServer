@@ -52,6 +52,7 @@
                     android:layout_height="wrap_content" />
 
                 <TextView
+                    android:id="@+id/tv_date"
                     android:layout_marginLeft="10dp"
                     android:text="DATE AND TIME"
                     android:layout_width="wrap_content"

@@ -3,14 +3,18 @@ package com.cgtrc.bym.testapplication;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.StrictMode;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.Gravity;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.cgtrc.bym.testapplication.bean.DetailStructure;
+import com.cgtrc.bym.testapplication.imageloader.ImageLoader;
 import com.cgtrc.bym.testapplication.util.ChangePx;
 import com.cgtrc.bym.testapplication.util.MakeTheUrl;
 
@@ -21,6 +25,7 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -30,72 +35,72 @@ public class articleDetailActivity extends Activity {
 
     private LinearLayout ll_content;
     private String href = "www.baidu.com";
-    private final String content = "中国男子足球队主教练选聘报名于2016年1月29日截止。鉴于时间紧迫" +
-            "为了全力备战完成中国男子足球队近期比赛任务(2018世界杯预选赛小组赛)，\n" +
-            "        中国足协在征求选聘专家组意见和推荐建议后，经慎重研究，决定由高洪波作为2018世界杯预选赛小组赛中国男子足球队主教练，\n" +
-            "        带领中国男足全力备战并完成3月24日与马尔代夫、3月29日与卡塔尔队的两场比赛任务。同时，考虑到中国足球的长远发展，\n" +
-            "        中国足协将更为慎重专业的继续进行中国男子足球队主教练选聘工作。";
+    private ImageLoader mImageLoader;
+    private static final int ASYNC_COMPLETE = 1;
+    private List<Element> list = new ArrayList<>();
+    private boolean flag = false;
+    private TextView title;
+    private TextView tv_original;
+    private TextView tv_date;
+
+    final Handler handler = new Handler() {
+
+        public void handleMessage(Message msg) {
+
+            Log.i("handler","接收到消息，正在处理");
+
+            if(msg.what == ASYNC_COMPLETE) {
+                list = (ArrayList)msg.obj;
+                Log.i("handler","处理中");
+                Log.i("handler","处理后list的大小" + list.size());
+                if(list.size() != 0){
+                    System.out.println("主线程中得到的list的大小：" + list.size());
+                    for(Element s : list){
+                        System.out.println(s);
+                    }
+                }
+            }
+        }
+    };
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.article_layout);
         ll_content = (LinearLayout) findViewById(R.id.ll_content);
+        title = (TextView) findViewById(R.id.tv_title);
+        tv_original = (TextView) findViewById(R.id.tv_original);
+        tv_date = (TextView) findViewById(R.id.tv_date);
+
+        mImageLoader = new ImageLoader(this);
+        mImageLoader.setRequiredSize(5 * (int) getResources().getDimension(R.dimen.litpic_width));
 
         //得到intent传递过来的url
         href = getIntent().getStringExtra("href");
         Log.i("href", href);
 
-        //异步加载数据
-
-
-        initViewAndData(content,href);
+        //异步加载
+        initViewAndData(href);
 
     }
 
-    private void initViewAndData(String content, String href) {
+    private void initViewAndData(String href) {
 
-        int textSize = ChangePx.dip2px(this, 8);
-        TextView tv = new TextView(this);
+        new MyAsyncTask().execute(href);
 
-        //字体大小
-        tv.setTextSize(textSize);
-        //边距（dp值）
-        int topMargin = ChangePx.dip2px(this, 10);
-        LinearLayout.LayoutParams layoutParamsImageMain = new LinearLayout
-                .LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        layoutParamsImageMain.topMargin = topMargin;
-        layoutParamsImageMain.bottomMargin = topMargin;
-        layoutParamsImageMain.leftMargin = topMargin;
-        layoutParamsImageMain.rightMargin = topMargin;
-        layoutParamsImageMain.gravity= Gravity.CENTER_HORIZONTAL;
-        tv.setText(content);
-        ll_content.addView(tv,layoutParamsImageMain);
-
-        //获取数据
-        getDate(href);
 
     }
 
-    private void getDate(String href){
-        List<String> list = new ArrayList<>();
-        MyAsyncTask myTask = (MyAsyncTask) new MyAsyncTask(list).execute(href);
 
 
-//        System.out.println("list size" + list.size());
-//        for(String s : list) {
-//            System.out.println(s);
-//        }
-    }
+    class MyAsyncTask extends AsyncTask<String,Integer,List<Element>> {
+
+        private List<Element> elementList = new ArrayList<>();
 
 
-    class MyAsyncTask extends AsyncTask<String,Integer,List<String>> {
-
-        private List<String> elementList = new ArrayList<>();
-
-        public MyAsyncTask(List<String> list){
-            this.elementList = list;
-        }
 
         @Override
         protected void onPreExecute() {
@@ -103,7 +108,7 @@ public class articleDetailActivity extends Activity {
         }
 
         @Override
-        protected List<String> doInBackground(String... params) {
+        protected List<Element> doInBackground(String... params) {
             String path = params[0];
 
             try {
@@ -116,16 +121,17 @@ public class articleDetailActivity extends Activity {
                     String nodeName = e.nodeName();
                     //System.out.println(nodeName);
                     if(nodeName.equals("title") || nodeName.equals("h3") || nodeName.equals("h2") ||
-                            nodeName.equals("span") || nodeName.equals("p") || nodeName.equals("h4") ) {
-                        elementList.add(e.text());
+                            nodeName.equals("span") || nodeName.equals("p") ) {
+                        elementList.add(e);
                         System.out.println( nodeName + "add success");
                         System.out.println(e.text());
+
                     } else if(nodeName.equals("img") ) {
-                        elementList.add(e.attr("src"));
+                        elementList.add(e);
                         System.out.println( nodeName + "add success");
                         System.out.println(e.attr("src"));
                     } else if(nodeName.equals("a")) {
-                        elementList.add(e.attr("href"));
+                        elementList.add(e);
                         System.out.println( nodeName + "add success");
                         System.out.println(e.attr("href"));
                     }
@@ -140,21 +146,71 @@ public class articleDetailActivity extends Activity {
         }
 
         @Override
-        protected void onPostExecute(List<String> list) {
+        protected void onPostExecute(List<Element> list) {
             super.onPostExecute(list);
-            list = elementList;
-            System.out.println("listsize：" + list.size());
-            updateView();
+            System.out.println("异步线程结束listsize：" + list.size());
+            Message msg = Message.obtain();
+            msg.what = ASYNC_COMPLETE;
+            msg.obj = list;
+            boolean success = handler.sendMessage(msg);
+            if(success){
+                Log.i("handler","handler成功发送消息");
+            }
+
+            for(Element s : list){
+                updateView(s);
+            }
+
+
         }
-    }
-
-    private void updateView() {
 
     }
 
 
+    private void updateView(Element s) {
+
+        int topMargin = ChangePx.dip2px(this, 10);
+        LinearLayout.LayoutParams layoutParamsTextMain = new LinearLayout
+                .LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        layoutParamsTextMain.topMargin = topMargin;
+        layoutParamsTextMain.bottomMargin = topMargin;
+        layoutParamsTextMain.leftMargin = topMargin;
+        layoutParamsTextMain.rightMargin = topMargin;
+        layoutParamsTextMain.gravity = Gravity.LEFT;
 
 
+        if (s.nodeName().equals("title")) { //加载新闻的标题
+            title.setText(s.text());
+        } else if (s.nodeName().equals("h3")) { //加载新闻来源
+            tv_original.setText(s.text());
+        } else if (s.nodeName().equals("span")) {//加载时间
+            tv_date.setText(s.text());
+        } else if (s.nodeName().equals("h2")) { //加载二级标题
+            int textSize = ChangePx.dip2px(this, 10);
+            TextView tv = new TextView(this);
+            tv.setTextSize(textSize);
+            tv.setText(s.text());
+            ll_content.addView(tv, layoutParamsTextMain);
+        } else if (s.nodeName().equals("p")) {//加载内容
+            int textSize = ChangePx.dip2px(this, 8);
+            TextView tv = new TextView(this);
+            tv.setTextSize(textSize);
+            tv.setText(s.text());
+            ll_content.addView(tv, layoutParamsTextMain);
+        } else if (s.nodeName().equals("img")) {//加载图片
+            ImageView iv = new ImageView(this);
+            mImageLoader.DisplayImage(s.attr("src"),iv);
+            ll_content.addView(iv, layoutParamsTextMain);
+        }  else if (s.nodeName().equals("a")) {//加载原文链接
 
+        }
+
+
+        //异步加载图片ImageLoader
+        //缓存新闻详情页的文字
+        //JSON解析
+
+
+    }
 
 }
