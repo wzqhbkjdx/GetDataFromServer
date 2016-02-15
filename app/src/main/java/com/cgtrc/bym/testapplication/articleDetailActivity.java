@@ -206,9 +206,8 @@ public class articleDetailActivity extends Activity {
         }
 
 
-        //异步加载图片ImageLoader
-        //缓存新闻详情页的文字
-        //JSON解析
+
+
 
 
     }

@@ -22,6 +22,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".articleDetailActivity"/>
+        <activity android:name=".JsonActivity"/>
     </application>
 
 </manifest>
