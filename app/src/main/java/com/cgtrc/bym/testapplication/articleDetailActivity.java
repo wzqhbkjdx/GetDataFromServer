@@ -76,7 +76,7 @@ public class articleDetailActivity extends Activity {
         tv_date = (TextView) findViewById(R.id.tv_date);
 
         mImageLoader = new ImageLoader(this);
-        mImageLoader.setRequiredSize(5 * (int) getResources().getDimension(R.dimen.litpic_width));
+        mImageLoader.setRequiredSize(20 * (int) getResources().getDimension(R.dimen.litpic_width));
 
         //得到intent传递过来的url
         href = getIntent().getStringExtra("href");

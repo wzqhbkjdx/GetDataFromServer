@@ -19,8 +19,8 @@
 	<ImageView 
 	    android:id="@+id/img" 	
      	android:layout_alignParentLeft="true"
-      	android:layout_width="@dimen/litpic_width"
-        android:layout_height="@dimen/litpic_height"
+      	android:layout_width="100dp"
+        android:layout_height="80dp"
         android:layout_marginRight="8dip"
         android:layout_below="@id/title"
         android:scaleType="centerCrop"     	
